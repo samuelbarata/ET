@@ -4,28 +4,10 @@ from scipy.special import factorial
 
 
 def generate_sequence_of_events(N=120, lam=3):
-    """Generates a sequence of events according to a Poisson distribution.
-
-    Args:
-        N (int, optional): The number of events to generate. Defaults to 120.
-        lam (int, optional): 𝛿 parameter in the poisson distribution. Defaults to 3.
-
-    Returns:
-        numpy.ndarray: Poisson distributed sequence of events.
-    """
     return np.random.poisson(lam, N)
     #return np.random.exponential(scale=1/lam, size=N)
 
 def my_histogram(data, num_bins=10):
-    """Calculates the histogram of the provided data.
-
-    Args:
-        data (array-like): The input data.
-        num_bins (int, optional): The number of bins for the histogram. Defaults to 10.
-
-    Returns:
-        tuple: A tuple containing the bin edges and the corresponding frequencies.
-    """
     bin_edges = np.linspace(0, max(data), num_bins)  # Divide into bins
     counts = np.zeros(num_bins)
 
@@ -37,7 +19,7 @@ def my_histogram(data, num_bins=10):
 
 if __name__ == '__main__':
     # Step 1: Generate sequence of events
-    N = 12000
+    N = 120
     lam = 3
     delta_t = generate_sequence_of_events(N, lam)
     count, bins, ignored = plt.hist(delta_t, 14, density=True)
@@ -61,8 +43,7 @@ if __name__ == '__main__':
         pos_values.append((bin_edges[k] + bin_edges[k+1])/2)
 
     plt.figure(figsize=(10, 5))
-    #plt.bar(histogram[:-1], bins, width=bin_edges[1] - bin_edges[0], edgecolor='black')
-    plt.bar(pos_values, histogram, label='Experimental Data', alpha=0.7)
+    plt.bar(x_values, histogram, label='Experimental Data', alpha=0.7)
     plt.plot(pos_values, poisson_distribution * N, color='red', linestyle='-', marker='', label='Poisson Distribution')
 
     plt.xlabel('Number of events in unitary time interval')
