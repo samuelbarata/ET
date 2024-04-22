@@ -6,7 +6,7 @@ def generate_poisson(N=120, lam=3):
     rng = np.random.default_rng()
     return rng.poisson(lam=lam, size=N)
 
-def my_histogram(data, num_bins=10, inteiro=False):
+def my_histogram(data, num_bins=10, inteiro=False, lam=3):
     """Calculates the histogram of the provided data.
 
     Args:
@@ -17,8 +17,8 @@ def my_histogram(data, num_bins=10, inteiro=False):
         tuple: A tuple containing the bin edges and the corresponding frequencies.
     """
     if inteiro:
-        bin_size = 1
-        bins = [int(min(data)) + i for i in range(num_bins)]
+        bin_size = round((max(data) - min(data))/num_bins + 0.5)
+        bins = [int(lam- num_bins/2*bin_size) + i*bin_size for i in range(num_bins)]
         bins.append(int(max(data)))
     else:
         bin_size = (max(data) - min(data)) / num_bins
@@ -45,17 +45,18 @@ def dois_dois():
     events = generate_poisson(N, lam)
 
     # Step 2: Create histogram
-    bins = 30
-    bin_edges, histogram = my_histogram(events, bins, inteiro=True)
+    bins = 10
+    bin_edges, histogram = my_histogram(events, bins, inteiro=True, lam=lam)
 
     # Step 3: Plot histogram
     # Plot theoretical exponential distribution
 
     # Generate x values for theoretical exponential distribution
-    x = np.linspace(min(events), max(events), 100)
+    # x = np.linspace(min(events), max(events), 100)
     # Calculate corresponding y values
-    y = len(events) * (bin_edges[1] - bin_edges[0]) * expon.pdf(x, scale=1/lam)
-    plt.plot(x, y, 'r--', label='Theoretical')
+    x = [x for x in range(50)]
+    y = len(events) * poisson.pmf(x, mu=lam, loc=0)
+    plt.stem(x, y, 'r--', label='Theoretical')
 
     # Experimental data
     plt.bar(bin_edges[:-1], histogram, width=(bin_edges[1]-bin_edges[0]), align='edge')
