@@ -1,20 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.special import factorial
-
+from scipy.stats import expon
 
 def generate_sequence_of_events(N=120, lam=3):
-    """Generates a sequence of events according to a Poisson distribution.
-
-    Args:
-        N (int, optional): The number of events to generate. Defaults to 120.
-        lam (int, optional): 𝛿 parameter in the poisson distribution. Defaults to 3.
-
-    Returns:
-        numpy.ndarray: Poisson distributed sequence of events.
-    """
-    return np.random.poisson(lam, N)
-    #return np.random.exponential(scale=1/lam, size=N)
+    events = np.zeros(N)
+    events_time = np.zeros(N)
+    current_time = 0
+    for i in range(N):
+        delta_t = np.random.exponential(1 / lam)
+        current_time += delta_t
+        events[i] = delta_t
+        events_time[i] = current_time
+    return events, events_time
 
 def my_histogram(data, num_bins=10):
     """Calculates the histogram of the provided data.
@@ -26,48 +23,43 @@ def my_histogram(data, num_bins=10):
     Returns:
         tuple: A tuple containing the bin edges and the corresponding frequencies.
     """
-    bin_edges = np.linspace(0, max(data), num_bins)  # Divide into bins
-    counts = np.zeros(num_bins)
+    bin_size = (max(data) - min(data)) / num_bins
+    bins = [min(data) + i * bin_size for i in range(num_bins)]
+    bins.append(max(data))
+
+    counts = [0 for _ in range(num_bins)]
 
     for value in data:
-        bin_idx = np.digitize(value, bin_edges) - 1  # Find the appropriate bin
-        counts[bin_idx] += 1
+        for bi in range(num_bins):
+            if bi == num_bins - 1 and value == bins[bi]:
+                counts[bi] += 1
+                break
+            if bins[bi] <= value < bins[bi+1]:
+                counts[bi] += 1
+                break
 
-    return bin_edges[:-1], counts  # Remove extra edge
+    return bins, counts
 
 if __name__ == '__main__':
     # Step 1: Generate sequence of events
-    N = 12000
+    N = 1200
     lam = 3
-    delta_t = generate_sequence_of_events(N, lam)
-    count, bins, ignored = plt.hist(delta_t, 14, density=True)
-    plt.show()
+    events, events_time = generate_sequence_of_events(N, lam)
 
-    print(delta_t)
     # Step 2: Create histogram
-    bins = 16
-    #bin_edges, histogram = my_histogram(delta_t, bins)
-    histogram, bin_edges = np.histogram(delta_t, bins)
-    print(bin_edges)
-    # Step 3: Plot histogram and theoretical distribution
-    x_values = np.arange(len(histogram))
+    bins = 30
+    bin_edges, histogram = my_histogram(events, bins)
 
-    #poisson_distribution = lam * np.exp(-lam * x_values)  # Theoretical Poisson distribution
-    poisson_distribution = np.exp(-lam)*np.power(lam, x_values)/factorial(x_values)
-    # Calculate midPoints of the bins
-    pos_values = [(bin_edges[k] + bin_edges[k+1]) / 2 for k in range(len(bin_edges) - 1)]
-    pos_values = []
-    for k in range(len(bin_edges)-1):
-        pos_values.append((bin_edges[k] + bin_edges[k+1])/2)
+    # Step 3: Plot histogram
+    # Plot theoretical exponential distribution
 
-    plt.figure(figsize=(10, 5))
-    #plt.bar(histogram[:-1], bins, width=bin_edges[1] - bin_edges[0], edgecolor='black')
-    plt.bar(pos_values, histogram, label='Experimental Data', alpha=0.7)
-    plt.plot(pos_values, poisson_distribution * N, color='red', linestyle='-', marker='', label='Poisson Distribution')
+    # Generate x values for theoretical exponential distribution
+    x = np.linspace(min(events), max(events), 100)
+    # Calculate corresponding y values
+    y = len(events) * (bin_edges[1] - bin_edges[0]) * expon.pdf(x, scale=1/lam)
+    plt.plot(x, y, 'r--', label='Theoretical')
 
-    plt.xlabel('Number of events in unitary time interval')
-    plt.ylabel('Frequency')
-    plt.title('Experimental Data vs Theoretical Poisson Distribution')
-    plt.legend()
+    # Experimental data
+    plt.bar(bin_edges[:-1], histogram, width=(bin_edges[1]-bin_edges[0]), align='edge')
     plt.grid(True)
     plt.show()
