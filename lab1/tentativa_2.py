@@ -1,19 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import expon
+from scipy.stats import poisson
 
-def generate_sequence_of_events(N=120, lam=3):
-    events = np.zeros(N)
-    events_time = np.zeros(N)
-    current_time = 0
-    for i in range(N):
-        delta_t = np.random.exponential(1 / lam)
-        current_time += delta_t
-        events[i] = delta_t
-        events_time[i] = current_time
-    return events, events_time
+def generate_poisson(N=120, lam=3):
+    rng = np.random.default_rng()
+    return rng.poisson(lam=lam, size=N)
 
-def my_histogram(data, num_bins=10):
+def my_histogram(data, num_bins=10, inteiro=False):
     """Calculates the histogram of the provided data.
 
     Args:
@@ -23,9 +16,14 @@ def my_histogram(data, num_bins=10):
     Returns:
         tuple: A tuple containing the bin edges and the corresponding frequencies.
     """
-    bin_size = (max(data) - min(data)) / num_bins
-    bins = [min(data) + i * bin_size for i in range(num_bins)]
-    bins.append(max(data))
+    if inteiro:
+        bin_size = 1
+        bins = [int(min(data)) + i for i in range(num_bins)]
+        bins.append(int(max(data)))
+    else:
+        bin_size = (max(data) - min(data)) / num_bins
+        bins = [min(data) + i * bin_size for i in range(num_bins)]
+        bins.append(max(data))
 
     counts = [0 for _ in range(num_bins)]
 
@@ -43,12 +41,12 @@ def my_histogram(data, num_bins=10):
 def dois_dois():
     # Step 1: Generate sequence of events
     N = 1200
-    lam = 3
-    events, events_time = generate_sequence_of_events(N, lam)
+    lam = 30
+    events = generate_poisson(N, lam)
 
     # Step 2: Create histogram
     bins = 30
-    bin_edges, histogram = my_histogram(events, bins)
+    bin_edges, histogram = my_histogram(events, bins, inteiro=True)
 
     # Step 3: Plot histogram
     # Plot theoretical exponential distribution
@@ -90,4 +88,4 @@ def dois_tres():
 
 
 if __name__ == '__main__':
-    dois_tres()
+    dois_dois()
