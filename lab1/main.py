@@ -2,17 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import poisson
 import math
-from utils import histogram
-
-def generate_poisson(N=120, lam=3):
-    rng = np.random.default_rng()
-    return rng.poisson(lam=lam, size=N)
+from utils import *
 
 def dois_dois():
     # Step 1: Generate sequence of events
-    N = 1200
-    lam = 30
+    N = 120
+    lam = 3
     events = generate_poisson(N, lam)
+    # TODO: I tried, but cant get this to work; but we do need to generate evens using the exponential thingy... [I think]
+    # events = events_to_poisson(generate_events(N, lam)[0])
 
     hist = histogram(events)
 
@@ -57,5 +55,5 @@ def dois_tres():
 
 
 if __name__ == '__main__':
-    # dois_dois()
-    dois_tres()
+    dois_dois()
+    # dois_tres()
