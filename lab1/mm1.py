@@ -1,9 +1,6 @@
 import random
 import numpy as np
-
-def generate_poisson(N=120, lam=3):
-    rng = np.random.default_rng()
-    return rng.poisson(lam=lam, size=N)
+from utils import *
 
 def simulate_mm1(arrival_rate, service_rate, simulation_time):
   """
@@ -18,70 +15,70 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time):
       A dictionary containing average waiting time and system utilization.
   """
   event_list = []
+  event_queue = []
   server_busy = False
   total_waiting_time = 0
+  total_queue_waiting_time = 0
   num_customers = 0
   system_idle_time = 0
 
   # Schedule the first arrival event
-  event_list.append((generate_poisson(arrival_rate), "arrival"))
+  event_list = [(0, "arrival")]
   current_time = 0
 
-  while event_list and current_time and any(event[0] <= simulation_time for event in event_list) <= simulation_time:
-    # Find the event with the earliest time (within simulation time)
-    filtered_events = [event for event in event_list if event[0] <= simulation_time]
-    if not filtered_events:
-      # No events within simulation time, add artificial departure
-      filtered_events.append((current_time, "departure"))
-    min_time = min(event[0] for event in filtered_events)
-
-    for i, event in enumerate(event_list):
-      if event[0] == min_time:
-        current_event = event_list.pop(i)
-        break
-
-    current_time, event_type = current_event
-
-    if event_type == "arrival":
-      # New packet arrives
-      print(f"Packet arrived at time {current_time}")
-      if server_busy:
-        num_customers += 1
+  # Main simulation loop
+  while(event_list):
+    # Read tuple from event list
+    current_event = event_list.pop(0)
+    # Update current time
+    current_time = current_event[0]
+    # Check if simulation time has been reached
+    if(current_time > simulation_time):
+      break
+    # Check for type of event
+    if(current_event[1] == "arrival"):
+      # If arrival, add it to queue
+      event_queue.append(current_event)
+      # Generate a new packet arrival event
+      next_event = (current_event[0] + generate_events(1, arrival_rate)[0], "arrival")
+      event_list.append(next_event)
+      #If the server is free and the queue is not empty, schedule a departure event
+      if(not server_busy and not event_queue):
+        continue
       else:
+        # Take oldest packet from queue
+        current_departure = event_queue.pop(-1)
+        # Mark server as busy
         server_busy = True
-        service_time = random.expovariate(service_rate)
-        event_list.append((current_time + service_time, "departure"))
-      event_list.append((current_time + random.expovariate(arrival_rate), "arrival"))
-      # Sort the list based on event time (first element of the tuple)
-      event_list.sort()
-
+        # Add departure event to list
+        event_list.append((next_event[0] + generate_events(1, service_rate)[0], "departure"))
     else:
-      # Packet finishes service
-      print(f"Packet departed at time {current_time}")
-      if num_customers > 0:
-        total_waiting_time += (current_time - event_list[0][0])
-        num_customers -= 1
-        # Schedule departure event for the next waiting customer (if any)
-        if num_customers > 0:
-          service_time = random.expovariate(service_rate)
-          event_list.append((current_time + service_time, "departure"))
+      # If departure, mark server as free
+      server_busy = False
+      # If the server is free and the queue is not empty, schedule a departure event
+      if(not server_busy and not event_queue):
+        continue
       else:
-        server_busy = False
-        system_idle_time += current_time - event_list[0][0]
-
-    if not event_list:  # Check if event_list is empty
-      break  # Terminate loop if no more events
-
+        # Take oldest packet from queue
+        current_departure = event_queue.pop(-1)
+        # Mark server as busy
+        server_busy = True
+        # Add departure event to list
+        event_list.append((current_departure[0] + generate_events(1, service_rate)[0], "departure"))
+  
   # Calculate performance metrics after loop termination
   average_waiting_time = total_waiting_time / num_customers if num_customers > 0 else 0
-  system_utilization = 1 - (system_idle_time / simulation_time)
+  average_time_in_queue = total_queue_waiting_time / num_customers if num_customers > 0 else 0
+  system_utilization = (1 - (system_idle_time / simulation_time))*100
 
   return {
       "average_waiting_time": average_waiting_time,
+      "average_time_in_queue": average_time_in_queue,
       "system_utilization": system_utilization
   }
 
 # Example usage
-results = simulate_mm1(arrival_rate=2, service_rate=3, simulation_time=6)
+results = simulate_mm1(arrival_rate=0.5, service_rate=0.25, simulation_time=10)
 print("Average waiting time:", results["average_waiting_time"])
+print("Average time in queue:", results["average_time_in_queue"])
 print("System utilization:", results["system_utilization"])
