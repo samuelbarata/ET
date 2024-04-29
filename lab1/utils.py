@@ -13,26 +13,22 @@ def generate_events(N, lambda_param):
     for delta_t in events:
         current_time += delta_t
         events_cumulative.append(current_time)
-    print(events)
     return events, events_cumulative
 
 def events_to_poisson(events):
-    current_time = 0
     poisson_counts = []
-    for i in events:
-        current_time += i
-        poisson_counts.append(math.floor(current_time))
+    for value in events[1]:
+        poisson_counts.append(math.floor(value))
 
-    return poisson_counts
+    # Count how many values are repeated x times
+    #[0,0,3,3,4] -> {2:2, 1:1} the number of pairs is 2, the number of singles is one
+    counts_but_for_real = {}
+    unique = set(poisson_counts)
+    for value in unique:
+        cnt = poisson_counts.count(value)
+        counts_but_for_real[cnt] = counts_but_for_real.get(cnt, 0) + 1
 
-# def events_to_poisson(events, interval=1):
-#     counts = np.zeros(len(interval)-1)
-#     for event in events:
-#         for i in range(len(interval)-1):
-#             if interval[i] <= event < interval[i+1]:
-#                 counts[i] += 1
-#                 break
-#     return counts
+    return counts_but_for_real
 
 
 def histogram(data):
