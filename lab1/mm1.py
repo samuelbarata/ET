@@ -1,5 +1,3 @@
-import random
-import numpy as np
 from utils import *
 import logging
 
@@ -93,9 +91,12 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time):
       "system_utilization": system_utilization
   }
 
-# Example usage
-logging.basicConfig(level=logging.DEBUG)
+# log_level = logging.DEBUG
+log_level = logging.INFO
+logging.basicConfig(level=log_level)
+
 results = simulate_mm1(arrival_rate=2, service_rate=2, simulation_time=50)
+
 print("Average time in system:", results["average_waiting_time"])
 print("Average time in queue:", results["average_time_in_queue"])
 print("System utilization:", results["system_utilization"])
