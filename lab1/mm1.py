@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from utils import *
+import logging
 
 def simulate_mm1(arrival_rate, service_rate, simulation_time):
   """
@@ -25,6 +26,7 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time):
   # Schedule the first arrival event
   event_list = [(0, "arrival")]
   current_time = 0
+  server_idle_since = 0
 
   # Main simulation loop
   while(event_list):
@@ -40,23 +42,35 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time):
       event_list = sorted(event_list, key=lambda x: x[0])
     # 3.
     else:
+      logging.debug(f"Departure at {current_event[0]}")
       # If departure, mark server as free
       server_busy = False
+      server_idle_since = current_event[0]
 
       total_waiting_time += current_event[0] - current_time # Tempo a processar
 
     # 4 .If the server is free and the queue is empty
     if(not server_busy and not event_queue):
-      system_idle_time += current_event[0] - current_time
+      logging.debug(f"Server is idle at {current_event[0]}")
       current_time = current_event[0]
+      continue
+    if(server_busy):
       continue
     # 5. Process the packet in the queue
     current_event = event_queue.pop(0)
+    logging.debug(f"Processing packet at {current_event[0]}")
     server_busy = True
 
+    if server_idle_since is not None:
+      system_idle_time += current_event[0] - server_idle_since
+      server_idle_since = None
+      logging.debug(f"System idle time: {system_idle_time}")
+
     # Add departure event to list
-    event_list.append((current_event[0] + generate_events(1, service_rate)[0], "departure"))
+    departure_time = current_event[0] + generate_events(1, service_rate)[0]
+    event_list.append((departure_time, "departure"))
     event_list = sorted(event_list, key=lambda x: x[0])
+    logging.debug(f"Departure scheduled at {departure_time}")
 
     num_customers += 1
     total_queue_waiting_time += current_event[0] - current_time # Tempo na fila
@@ -71,7 +85,7 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time):
   # Calculate performance metrics after loop termination
   average_waiting_time = total_waiting_time / num_customers if num_customers > 0 else 0
   average_time_in_queue = total_queue_waiting_time / num_customers if num_customers > 0 else 0
-  system_utilization = ((system_idle_time / end_simulation_time))*100
+  system_utilization = (1 - (system_idle_time / end_simulation_time))*100
 
   return {
       "average_waiting_time": average_waiting_time,
@@ -80,7 +94,8 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time):
   }
 
 # Example usage
-results = simulate_mm1(arrival_rate=100, service_rate=2, simulation_time=500)
+logging.basicConfig(level=logging.DEBUG)
+results = simulate_mm1(arrival_rate=2, service_rate=2, simulation_time=50)
 print("Average time in system:", results["average_waiting_time"])
 print("Average time in queue:", results["average_time_in_queue"])
 print("System utilization:", results["system_utilization"])
