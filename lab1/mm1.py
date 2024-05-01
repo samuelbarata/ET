@@ -1,7 +1,7 @@
 from utils import *
 import logging
 
-def simulate_mm1(arrival_rate, service_rate, simulation_time):
+def simulate_mm1(arrival_rate, service_rate, simulation_time, queue_size=None):
   """
   Simulates an M/M/1 queue for a given simulation time.
 
@@ -16,25 +16,36 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time):
   event_list = []
   event_queue = []
   server_busy = False
-  total_waiting_time = 0
-  total_queue_waiting_time = 0
-  num_customers = 0
-  system_idle_time = 0
+  total_queue_waiting_time = 0.0
+  total_processing_time = 0.0
+  packets_arrived = 0
+  packets_processed = 0
+  system_idle_time = 0.0
+  max_queue_size = 0
 
   # Schedule the first arrival event
   event_list = [(0, "arrival")]
-  current_time = 0
-  server_idle_since = 0
+  current_time = 0.0
+  server_idle_since = 0.0
 
   # Main simulation loop
   while(event_list):
     # 1. Read tuple from event list
     current_event = event_list.pop(0)
+
+    # process the last departure event
+    if current_time > simulation_time and current_event[1] == "arrival":
+      continue
+
     # 2.
     if(current_event[1] == "arrival"):
       # Add to queue
       event_queue.append(current_event)
-      num_customers += 1
+      max_queue_size = max(max_queue_size, len(event_queue))
+      if queue_size is not None and len(event_queue) > queue_size:
+        logging.error(f"Queue size exceeded at {simulation_time}")
+        break
+      packets_arrived += 1
       # Generate a new packet arrival event
       next_event = (current_event[0] + generate_events(1, arrival_rate)[0], "arrival")
       event_list.append(next_event)
@@ -44,9 +55,8 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time):
       logging.debug(f"Departure at {current_event[0]}")
       # If departure, mark server as free
       server_busy = False
+      packets_processed += 1
       server_idle_since = current_event[0]
-
-      total_waiting_time += current_event[0] - current_time # Tempo a processar
 
     # 4 .If the server is free and the queue is empty
     if(not server_busy and not event_queue):
@@ -54,9 +64,10 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time):
       current_time = current_event[0]
       continue
     if(server_busy):
+      current_time = current_event[0]
       continue
     # 5. Process the packet in the queue
-    current_event = event_queue.pop(0)
+    queue_event = event_queue.pop(0)
     logging.debug(f"Processing packet at {current_event[0]}")
     server_busy = True
 
@@ -66,29 +77,32 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time):
       logging.debug(f"System idle time: {system_idle_time}")
 
     # Add departure event to list
-    departure_time = current_event[0] + generate_events(1, service_rate)[0]
-    event_list.append((departure_time, "departure"))
+    processing_duration = generate_events(1, service_rate)[0]
+    event_list.append((processing_duration + current_event[0], "departure"))
     event_list = sorted(event_list, key=lambda x: x[0])
-    logging.debug(f"Departure scheduled at {departure_time}")
+    logging.debug(f"Departure scheduled at {processing_duration+current_event[0]}")
 
-    total_queue_waiting_time += current_event[0] - current_time # Tempo na fila
-    total_waiting_time += current_event[0] - current_time       # Tempo na fila
+    total_queue_waiting_time += current_event[0] - queue_event[0] # Tempo na fila
+    total_processing_time += processing_duration                # Tempo q vai demorar a processar
 
     current_time = current_event[0]
-    # Check if simulation time has been reached
-    if(current_time > simulation_time):
-      break
+
   end_simulation_time = current_time
 
   # Calculate performance metrics after loop termination
-  average_waiting_time = total_waiting_time / num_customers if num_customers > 0 else 0
-  average_time_in_queue = total_queue_waiting_time / num_customers if num_customers > 0 else 0
+  total_waiting_time = total_queue_waiting_time + total_processing_time
+  average_waiting_time = total_waiting_time / packets_processed if packets_processed > 0 else 0
+  average_time_in_queue = total_queue_waiting_time / packets_processed if packets_processed > 0 else 0
   system_utilization = 1 - (system_idle_time / end_simulation_time)
 
   return {
       "average_waiting_time": average_waiting_time,
       "average_time_in_queue": average_time_in_queue,
-      "system_utilization": system_utilization
+      "system_utilization": system_utilization,
+      "packets_processed": packets_processed,
+      "packets_arrived": packets_arrived,
+      "max_queue_size": max_queue_size,
+      "end_simulation_time": end_simulation_time,
   }
 
 # log_level = logging.DEBUG
@@ -96,23 +110,30 @@ log_level = logging.INFO
 logging.basicConfig(level=log_level)
 
 arrival_rate = 100
-service_rate = 101
-simulation_time = 50
+service_rate = 1000
+simulation_time = 500
+queue_size = None
 
 if arrival_rate >= service_rate:
   logging.warning("Arrival rate should be less than service rate to avoid infinite queue growth.")
 
-results = simulate_mm1(arrival_rate, service_rate, simulation_time)
+results = simulate_mm1(arrival_rate, service_rate, simulation_time, queue_size)
 
-print(f"Average time in system: {results['average_waiting_time']} [Theoretical: {1/(service_rate - arrival_rate)}]")
-print(f"Average time in queue: {results['average_time_in_queue']} [Theoretical: {arrival_rate/(service_rate*(service_rate-arrival_rate))}]")
-theoretical_system_utilization = arrival_rate/service_rate
-print(f"System utilization: {results['system_utilization'] * 100}% [Theoretical: {theoretical_system_utilization*100}%]")
+Ws = 1/(service_rate - arrival_rate)
+print(f"Average time in system: {results['average_waiting_time']} [Theoretical: {Ws}]")
+Wq = arrival_rate/(service_rate*(service_rate-arrival_rate))
+print(f"Average time in queue: {results['average_time_in_queue']} [Theoretical: {Wq}]")
+ro = arrival_rate/service_rate
+print(f"System utilization: {results['system_utilization'] * 100}% [Theoretical: {ro*100}%]")
 
 average_queue_size = results['system_utilization']**2/(1-results['system_utilization'])
-if arrival_rate == service_rate:
-  theoretical_average_queue_size = 1
-else:
-  theoretical_average_queue_size = theoretical_system_utilization**2 / (1-theoretical_system_utilization) if theoretical_system_utilization != 1 else float('inf')
+# if arrival_rate == service_rate:
+#   Lq = 1
+# else:
+#   Lq = ro**2 / (1-ro) if ro != 1 else float('inf')
+Lq = arrival_rate * Wq
 
-print(f"Average queue size: {average_queue_size} [Theoretical: {theoretical_average_queue_size}]")
+print(f"Average queue size: {average_queue_size} [Theoretical: {Lq}]")
+print(f"Packets processed: {results['packets_processed']}/{results['packets_arrived']}")
+print(f"Max queue size reached: {results['max_queue_size']}")
+print(f"End simulation time: {results['end_simulation_time']}")
