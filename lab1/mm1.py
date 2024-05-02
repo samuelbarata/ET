@@ -1,5 +1,6 @@
 from utils import *
 import logging
+import matplotlib.pyplot as plt
 
 def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=None, max_events=None):
   """
@@ -22,6 +23,7 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=No
   packets_processed = 0
   system_idle_time = 0.0
   max_queue_size = 0
+  queue_size_over_time = []
 
   # Schedule the first arrival event
   event_list = [(0, "arrival")]
@@ -35,6 +37,7 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=No
 
     # process the last departure event
     if simulation_time is not None and current_time > simulation_time and current_event[1] == "arrival":
+      queue_size_over_time.append((current_event[0], len(event_queue)))
       continue
 
     # 2.
@@ -63,9 +66,11 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=No
     if(not server_busy and not event_queue):
       logging.debug(f"Server is idle at {current_event[0]}")
       current_time = current_event[0]
+      queue_size_over_time.append((current_event[0], len(event_queue)))
       continue
     if(server_busy):
       current_time = current_event[0]
+      queue_size_over_time.append((current_event[0], len(event_queue)))
       continue
     # 5. Process the packet in the queue
     queue_event = event_queue.pop(0)
@@ -87,6 +92,7 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=No
     total_processing_time += processing_duration                # Tempo q vai demorar a processar
 
     current_time = current_event[0]
+    queue_size_over_time.append((current_time, len(event_queue)))
 
   end_simulation_time = current_time
 
@@ -104,17 +110,18 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=No
       "packets_arrived": packets_arrived,
       "max_queue_size": max_queue_size,
       "end_simulation_time": end_simulation_time,
+      "queue_size_over_time": queue_size_over_time,
   }
 
 # log_level = logging.DEBUG
 log_level = logging.INFO
 logging.basicConfig(level=log_level)
 
-arrival_rate = 100
+arrival_rate = 999
 service_rate = 1000
 simulation_time = None
 queue_size = None
-max_events = 100000
+max_events = 100
 
 if arrival_rate >= service_rate:
   logging.warning("Arrival rate should be less than service rate to avoid infinite queue growth.")
@@ -139,3 +146,12 @@ print(f"Average queue size: {average_queue_size} [Theoretical: {Lq}]")
 print(f"Packets processed: {results['packets_processed']}/{results['packets_arrived']}")
 print(f"Max queue size reached: {results['max_queue_size']}")
 print(f"End simulation time: {results['end_simulation_time']}")
+
+# plot queue size
+x = [float(k[0]) for k in results['queue_size_over_time']]
+y = [k[1] for k in results['queue_size_over_time']]
+plt.plot(x, y)
+plt.xlabel('Time')
+plt.ylabel('Queue size')
+plt.title('Queue size over time')
+plt.show()
