@@ -1,7 +1,7 @@
 from utils import *
 import logging
 
-def simulate_mm1(arrival_rate, service_rate, simulation_time, queue_size=None):
+def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=None, max_events=None):
   """
   Simulates an M/M/1 queue for a given simulation time.
 
@@ -34,22 +34,23 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time, queue_size=None):
     current_event = event_list.pop(0)
 
     # process the last departure event
-    if current_time > simulation_time and current_event[1] == "arrival":
+    if simulation_time is not None and current_time > simulation_time and current_event[1] == "arrival":
       continue
 
     # 2.
     if(current_event[1] == "arrival"):
-      # Add to queue
-      event_queue.append(current_event)
-      max_queue_size = max(max_queue_size, len(event_queue))
-      if queue_size is not None and len(event_queue) > queue_size:
-        logging.error(f"Queue size exceeded at {simulation_time}")
-        break
-      packets_arrived += 1
-      # Generate a new packet arrival event
-      next_event = (current_event[0] + generate_events(1, arrival_rate)[0], "arrival")
-      event_list.append(next_event)
-      event_list = sorted(event_list, key=lambda x: x[0])
+      if max_events is None or packets_arrived < max_events:
+        # Add to queue
+        event_queue.append(current_event)
+        max_queue_size = max(max_queue_size, len(event_queue))
+        if queue_size is not None and len(event_queue) > queue_size:
+          logging.error(f"Queue size exceeded at {simulation_time}")
+          break
+        packets_arrived += 1
+        # Generate a new packet arrival event
+        next_event = (current_event[0] + generate_events(1, arrival_rate)[0], "arrival")
+        event_list.append(next_event)
+        event_list = sorted(event_list, key=lambda x: x[0])
     # 3.
     else:
       logging.debug(f"Departure at {current_event[0]}")
@@ -111,13 +112,14 @@ logging.basicConfig(level=log_level)
 
 arrival_rate = 100
 service_rate = 1000
-simulation_time = 500
+simulation_time = None
 queue_size = None
+max_events = 100000
 
 if arrival_rate >= service_rate:
   logging.warning("Arrival rate should be less than service rate to avoid infinite queue growth.")
 
-results = simulate_mm1(arrival_rate, service_rate, simulation_time, queue_size)
+results = simulate_mm1(arrival_rate, service_rate, simulation_time, queue_size, max_events)
 
 Ws = 1/(service_rate - arrival_rate)
 print(f"Average time in system: {results['average_waiting_time']} [Theoretical: {Ws}]")
