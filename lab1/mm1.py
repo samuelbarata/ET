@@ -121,7 +121,7 @@ arrival_rate = 999
 service_rate = 1000
 simulation_time = None
 queue_size = None
-max_events = 100
+max_events = 10000
 
 if arrival_rate >= service_rate:
   logging.warning("Arrival rate should be less than service rate to avoid infinite queue growth.")
