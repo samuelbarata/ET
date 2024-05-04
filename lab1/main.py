@@ -6,7 +6,7 @@ from utils import *
 
 def interactive_dois_dois():
     N = int(input("Enter N: "))
-    lam = int(input("Enter lambda: "))
+    lam = float(input("Enter lambda: "))
     return dois_dois(N, lam)
 
 def dois_dois(N=120, lam=3):
@@ -17,13 +17,21 @@ def dois_dois(N=120, lam=3):
     unique_x = [x for x in hist.keys()]
     unique_x.sort()
 
-    y = poisson.pmf(unique_x, mu=lam)
-    plt.stem(unique_x, y, 'r--', label='Theoretical')
+    y = [0 for _ in unique_x]
+    y_sum = poisson.pmf(unique_x, mu=lam)
+    theo = plt.plot(unique_x, y_sum, 'r--', label='Theoretical')
+
+    # y = poisson.pmf(unique_x, mu=lam)
+    # plt.stem(unique_x, y, 'r--', label='Theoretical')
 
     # Experimental data
     counts = sum(hist.values())
     y = [hist[x]/counts for x in unique_x]
-    plt.bar(unique_x, y, width=1, align='center')
+    exp = plt.bar(unique_x, y, width=1, align='center', label='Experimental')
+    plt.legend(handles=[theo[0], exp])
+    plt.xlabel('Number of events')
+    plt.ylabel('Frequency')
+    plt.title(f'{N} events with rate {lam}')
     plt.grid(True)
     plt.show()
 
@@ -49,7 +57,7 @@ def dois_tres():
 
     y = [0 for _ in unique_x]
     y_sum = poisson.pmf(unique_x, mu=sum(lambdas))
-    plt.plot(unique_x, y_sum, 'r--')
+    theo = plt.plot(unique_x, y_sum, 'r--', label='Theoretical')
 
     for lam in lambdas:
         new_y = poisson.pmf(unique_x, mu=lam)
@@ -59,12 +67,20 @@ def dois_tres():
     # Experimental data
     counts = sum(hist.values())
     y = [hist[x]/counts for x in unique_x]
-    plt.bar(unique_x, y, width=1, align='center')
+    exp = plt.bar(unique_x, y, width=1, align='center', label='Experimental')
+    plt.xlabel('Number of events')
+    plt.ylabel('Frequency')
+    plt.title(f'Superposition of Poisson with rates {lambdas}')
+    plt.legend(handles=[theo[0], exp])
     plt.grid(True)
     plt.show()
 
-
 if __name__ == '__main__':
-    # interactive_dois_dois()
-    # dois_dois(N=20000, lam=30)
+    #interactive_dois_dois()
+    report = ((10,1), (1000, 1), (10000, 1), (50000, 1),
+    (10,5), (1000, 5), (10000, 5), (50000, 5),
+    (10,20), (1000, 20), (10000, 20), (50000, 20))
+    for N, lam in report:
+        dois_dois(N, lam)
+
     dois_tres()
