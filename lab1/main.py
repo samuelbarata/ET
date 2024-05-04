@@ -35,10 +35,7 @@ def dois_dois(N=120, lam=3):
     plt.grid(True)
     plt.show()
 
-def dois_tres():
-    N = 5000
-    KIND_OF_N = 5000
-    lambdas = [3, 7, 13, 15]
+def dois_tres(N=5000, lambdas=[3, 7, 13, 15]):
     N_temp = N*len(lambdas)
     N_arr = [int(N_temp*lam//sum(lambdas)) for lam in lambdas]
 
@@ -70,7 +67,7 @@ def dois_tres():
     exp = plt.bar(unique_x, y, width=1, align='center', label='Experimental')
     plt.xlabel('Number of events')
     plt.ylabel('Frequency')
-    plt.title(f'Superposition of Poisson with rates {lambdas}')
+    plt.title(f'Total of {N} events with rates {lambdas}')
     plt.legend(handles=[theo[0], exp])
     plt.grid(True)
     plt.show()
@@ -83,4 +80,5 @@ if __name__ == '__main__':
     for N, lam in report:
         dois_dois(N, lam)
 
-    dois_tres()
+    for N in [100, 5000, 50000, 500000]:
+        dois_tres(N=N)

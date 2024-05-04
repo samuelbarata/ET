@@ -132,9 +132,15 @@ if arrival_rate >= service_rate:
 
 results = simulate_mm1(arrival_rate, service_rate, simulation_time, queue_size, max_events, process_remaining)
 
-Ws = 1/(service_rate - arrival_rate)
+try:
+  Ws = 1/(service_rate - arrival_rate)
+except ZeroDivisionError:
+  Ws = float('inf')
 print(f"Average time in system: {results['average_waiting_time']} [Theoretical: {Ws}]")
-Wq = arrival_rate/(service_rate*(service_rate-arrival_rate))
+try:
+  Wq = arrival_rate/(service_rate*(service_rate-arrival_rate))
+except ZeroDivisionError:
+  Wq = float('inf')
 print(f"Average time in queue: {results['average_time_in_queue']} [Theoretical: {Wq}]")
 ro = arrival_rate/service_rate
 print(f"System utilization: {results['system_utilization'] * 100}% [Theoretical: {ro*100}%]")
@@ -157,5 +163,5 @@ y = [k[1] for k in results['queue_size_over_time']]
 plt.plot(x, y)
 plt.xlabel('Time')
 plt.ylabel('Queue size')
-plt.title('Queue size over time')
+plt.title(f'Queue size over time λ = {arrival_rate}, μ = {service_rate}, N = {max_events}')
 plt.show()
