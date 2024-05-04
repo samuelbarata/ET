@@ -2,7 +2,7 @@ from utils import *
 import logging
 import matplotlib.pyplot as plt
 
-def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=None, max_events=None):
+def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=None, max_events=None, process_remaining=True):
   """
   Simulates an M/M/1 queue for a given simulation time.
 
@@ -32,6 +32,9 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=No
 
   # Main simulation loop
   while(event_list):
+    if max_events is not None and packets_processed >= max_events and not process_remaining:
+      break
+
     # 1. Read tuple from event list
     current_event = event_list.pop(0)
 
@@ -42,7 +45,7 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=No
 
     # 2.
     if(current_event[1] == "arrival"):
-      if max_events is None or packets_arrived < max_events:
+      if max_events is None or packets_processed < max_events:
         # Add to queue
         event_queue.append(current_event)
         max_queue_size = max(max_queue_size, len(event_queue))
@@ -117,16 +120,17 @@ def simulate_mm1(arrival_rate, service_rate, simulation_time=None, queue_size=No
 log_level = logging.INFO
 logging.basicConfig(level=log_level)
 
-arrival_rate = 999
-service_rate = 1000
+arrival_rate = 120
+service_rate = 100
 simulation_time = None
 queue_size = None
-max_events = 10000
+max_events = 100000
+process_remaining = False
 
 if arrival_rate >= service_rate:
   logging.warning("Arrival rate should be less than service rate to avoid infinite queue growth.")
 
-results = simulate_mm1(arrival_rate, service_rate, simulation_time, queue_size, max_events)
+results = simulate_mm1(arrival_rate, service_rate, simulation_time, queue_size, max_events, process_remaining)
 
 Ws = 1/(service_rate - arrival_rate)
 print(f"Average time in system: {results['average_waiting_time']} [Theoretical: {Ws}]")
