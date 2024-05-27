@@ -8,5 +8,7 @@ ip addr add 10.0.0.1/24 dev external0
 ip netns exec examplens ip link set internal0 up
 ip link set dev external0 up
 
-# DELETE
-# ip netns del examplens
+
+# Test
+ping 10.0.0.2
+ip netns exec examplens ping 10.0.0.1

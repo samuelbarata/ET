@@ -28,6 +28,7 @@ ip route add 10.0.13.0/24 via 10.0.11.2
 ip netns exec near ip route add 10.0.13.0/24 via 10.0.12.1
 ip netns exec far ip route add 10.0.11.0/24 via 10.0.12.1
 
-# DELETE
-# ip netns del near
-# ip netns del far
+# Test
+ping 10.0.12.1
+ping 10.0.13.1
+ip netns exec far ping 10.0.11.1

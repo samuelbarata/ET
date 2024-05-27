@@ -82,7 +82,6 @@ ip netns exec H2 ip addr add 10.0.1.2/24 dev veth-H2
 ip netns exec H2 ip link set veth-H2 up
 ip netns exec H2 ip route add default via 10.0.1.254
 
-ip netns exec SW1 ip addr add 10.0.1.254/24 dev veth-SW1-H1
 ip netns exec SW1 ip link set veth-SW1-H1 up
 ip netns exec SW1 ip link set veth-SW1-H2 up
 ip netns exec SW1 ip link set veth-SW1-R1 up
@@ -92,9 +91,6 @@ ip netns exec R1 ip link set veth-R1-SW1 up
 
 
 #Network 2
-ip netns exec SW3 ip link set veth-SW3-R1 up
-ip netns exec SW3 ip addr add 10.0.2.253/24 dev veth-SW3-R1
-
 ip netns exec R1 ip addr add 10.0.2.254/24 dev veth-R1-SW3
 ip netns exec R1 ip link set veth-R1-SW3 up
 
@@ -110,6 +106,7 @@ ip netns exec H7 ip addr add 10.0.2.7/24 dev veth-H7
 ip netns exec H7 ip link set veth-H7 up
 ip netns exec H7 ip route add default via 10.0.2.254
 
+ip netns exec SW3 ip link set veth-SW3-R1 up
 ip netns exec SW3 ip link set veth-SW3-H5 up
 ip netns exec SW3 ip link set veth-SW3-H6 up
 ip netns exec SW3 ip link set veth-SW3-H7 up
@@ -122,12 +119,10 @@ ip netns exec R1 ip link set veth-R1-R2 up
 ip netns exec R2 ip addr add 10.0.3.2/24 dev veth-R2-R1
 ip netns exec R2 ip link set veth-R2-R1 up
 
+
 #Network 4
 ip netns exec R2 ip addr add 10.0.4.254/24 dev veth-R2-SW2
 ip netns exec R2 ip link set veth-R2-SW2 up
-
-ip netns exec SW2 ip addr add 10.0.4.254/24 dev veth-SW2-R2
-ip netns exec SW2 ip link set veth-SW2-R2 up
 
 ip netns exec H3 ip addr add 10.0.4.3/24 dev veth-H3
 ip netns exec H3 ip link set veth-H3 up
@@ -137,6 +132,7 @@ ip netns exec H4 ip addr add 10.0.4.4/24 dev veth-H4
 ip netns exec H4 ip link set veth-H4 up
 ip netns exec H4 ip route add default via 10.0.4.254
 
+ip netns exec SW2 ip link set veth-SW2-R2 up
 ip netns exec SW2 ip link set veth-SW2-H3 up
 ip netns exec SW2 ip link set veth-SW2-H4 up
 
@@ -198,22 +194,5 @@ ip netns exec H3 ping 10.0.2.6
 ip netns exec H7 ping 10.0.4.4
 
 # debug
-ip netns exec R1 tcpdump -i veth-SW1-H1
-ip netns exec R1 ip route
-
-# DELETE
-# ip netns del H1
-# ip netns del H2
-# ip netns del H3
-# ip netns del H4
-# ip netns del H5
-# ip netns del H6
-# ip netns del H7
-# ip netns del SW1
-# ip netns del SW2
-# ip netns del SW3
-# ip netns del R1
-# ip netns del R2
-
-
-
+# ip netns exec R1 tcpdump -i veth-SW1-H1
+# ip netns exec R1 ip route
