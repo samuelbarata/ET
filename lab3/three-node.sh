@@ -1,4 +1,5 @@
 #!/bin/bash
+ip -all netns delete
 ip netns add near
 ip netns add far
 ip link add one type veth peer name two

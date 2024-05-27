@@ -1,4 +1,5 @@
 #!/bin/bash
+ip -all netns delete
 # Hosts
 ip netns add H1
 ip netns add H2

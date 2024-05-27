@@ -1,4 +1,5 @@
 #!/bin/bash
+ip -all netns delete
 ip netns add examplens
 ip link add external0 type veth peer name internal0
 ip link set internal0 netns examplens
